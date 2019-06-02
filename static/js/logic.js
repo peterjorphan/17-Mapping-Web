@@ -1,12 +1,3 @@
-// var link = "http://data.beta.nyc//dataset/0ff93d2d-90ba-457c-9f7e-39e47bf2ac5f/resource/" +
-// "35dd04fb-81b3-479b-a074-a27a37888ce7/download/d085e2f8d0b54d4590b1e7d1f35594c1pediacitiesnycneighborhoods.geojson";
-
-// // Grabbing our GeoJSON data..
-// d3.json(link, function(data) {
-//   // Creating a GeoJSON layer with the retrieved data
-//   L.geoJson(data).addTo(map);
-// });
-
 // Store our API endpoint inside queryUrl
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
 
@@ -20,13 +11,24 @@ d3.json(queryUrl, function(data) {
 function createFeatures(earthquakeData) {
 
   // Define a function we want to run once for each feature in the features array
-  // Give each feature a popup describing the place and time of the earthquake
+  // Give each feature a popup describing the place, time and magnitude of the earthquake
   function onEachFeature(feature, layer) {
     layer.bindPopup("<h3>" + feature.properties.place +
       "</h3><hr><p>" + new Date(feature.properties.time) + "</p>" +
       "<p>Magnitude: " + feature.properties.mag + "</p>");
   }
 
+  // Create a function that assigns colors based on magnitude
+  function getColor(d) {
+    return d > 7  ? 'darkred' :
+           d > 6  ? 'red' :
+           d > 5  ? 'orangeRed' :
+           d > 4  ? 'darkorange' :
+           d > 3  ? 'orange' :
+           d > 2  ? 'yellow' :
+           d > 1  ? 'yellowgreen' :
+                    'limegreen';
+  }
   // Create a GeoJSON layer containing the features array on the earthquakeData object
   // Run the onEachFeature function once for each piece of data in the array
   var earthquakes = L.geoJSON(earthquakeData, {
@@ -34,18 +36,17 @@ function createFeatures(earthquakeData) {
     pointToLayer: function (feature, latlng) {
       return L.circleMarker(latlng, {
         radius: feature.properties.mag*5,
-        fillColor: "#ff7800",
+        fillColor: getColor(feature.properties.mag),
         color: "#000",
         weight: 0.5,
         opacity: 1,
-        fillOpacity: 0.8
+        fillOpacity: 0.75
         })
     }
   });
 
-  // Sending our earthquakes layer to the createMap function
+  // Send the earthquakes layer to the createMap function
   createMap(earthquakes);
-  console.log(earthquakes);
 }
 
 function createMap(earthquakes) {
@@ -85,7 +86,7 @@ function createMap(earthquakes) {
 
 
   // Create a layer control
-  // Pass in our baseMaps and overlayMaps
+  // Pass in the baseMaps and overlayMaps
   // Add the layer control to the map
   L.control.layers(baseMaps, overlayMaps, {
     collapsed: false
