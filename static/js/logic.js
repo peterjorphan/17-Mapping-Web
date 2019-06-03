@@ -5,8 +5,20 @@ var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_we
 d3.json(queryUrl, function(data) {
   // Once we get a response, send the data.features object to the createFeatures function
   createFeatures(data.features);
-  console.log(data.features);
+  // console.log(data.features);
 });
+
+// Create a function that assigns colors based on magnitude
+function getColor(d) {
+  return  d > 7  ? 'darkred' :
+          d > 6  ? 'red' :
+          d > 5  ? 'orangeRed' :
+          d > 4  ? 'darkorange' :
+          d > 3  ? 'orange' :
+          d > 2  ? 'yellow' :
+          d > 1  ? 'yellowgreen' :
+                  'limegreen';
+}
 
 function createFeatures(earthquakeData) {
 
@@ -18,17 +30,6 @@ function createFeatures(earthquakeData) {
       "<p>Magnitude: " + feature.properties.mag + "</p>");
   }
 
-  // Create a function that assigns colors based on magnitude
-  function getColor(d) {
-    return d > 7  ? 'darkred' :
-           d > 6  ? 'red' :
-           d > 5  ? 'orangeRed' :
-           d > 4  ? 'darkorange' :
-           d > 3  ? 'orange' :
-           d > 2  ? 'yellow' :
-           d > 1  ? 'yellowgreen' :
-                    'limegreen';
-  }
   // Create a GeoJSON layer containing the features array on the earthquakeData object
   // Run the onEachFeature function once for each piece of data in the array
   var earthquakes = L.geoJSON(earthquakeData, {
@@ -84,11 +85,31 @@ function createMap(earthquakes) {
     layers: [streetmap, earthquakes]
   });
 
-
   // Create a layer control
   // Pass in the baseMaps and overlayMaps
   // Add the layer control to the map
   L.control.layers(baseMaps, overlayMaps, {
     collapsed: false
   }).addTo(myMap);
+
+
+  // Create layer control to add legend
+  var legend = L.control({position: 'bottomright'});
+
+  legend.onAdd = function (map) {
+
+      var div = L.DomUtil.create('div', 'info legend'),
+          mag = [0, 1, 2, 3, 4, 5, 6, 7],
+          labels = [];
+      
+      // loop through the magnitude intervals and generate a label with a colored square for each interval
+      for (var i = 0; i < mag.length; i++) {
+          div.innerHTML +=
+              '<i style="background:' + getColor(mag[i] + 1) + '"></i> ' +
+              mag[i] + (mag[i + 1] ? '&ndash;' + mag[i + 1] + '<br>' : '+');
+      }
+      return div;
+  };
+  
+  legend.addTo(myMap);
 }
